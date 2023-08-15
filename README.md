@@ -31,3 +31,11 @@ python ./install_as_service.py
 The latest raspbian removes access to vcgencmd which has meant workarounds to attempt to aquire similar information 
 to that which vcgencmd returned originally - the tests here are fine for my use case but you may want to exand on them.
 If you do, please submit a PR!
+
+## Sponsors
+This project currently has no sponsors so is only maintained as I need or as PR's come in. If you are an industrial 
+or similar user and want specific adaptions or support, raise an issue requesting that I contact you.
+
+## License
+Standard Apache 2.0 license.
+Please fork and reference the project if used elsewhere - I'm always interested to know who has found it useful. 
