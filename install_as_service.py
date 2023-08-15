@@ -11,7 +11,11 @@ MAIN_SCRIPT_PATH = os.path.join(CURRENT_DIR, "diagnostics.py")
 def create_service_script():
     with open(SCRIPT_PATH, 'w') as f:
         f.write("#!/bin/bash\n")
-        f.write("export NO_AT_BRIDGE=1\n") # prevent issues with accessing the accessibility bus
+        f.write("exec > /tmp/diagnostics.log 2>&1\n")  # Redirect stdout and stderr to a log file.
+        f.write("set -x\n")  # Enable bash debugging.
+
+        f.write("export NO_AT_BRIDGE=1\n")  # prevent issues with accessing the accessibility bus
+
         f.write("sleep 10\n")  # Wait for 10 seconds to ensure X server is ready.
         # Open lxterminal without waiting for it to close.
         f.write(f"lxterminal -e \"bash -c 'sudo python {MAIN_SCRIPT_PATH}; bash'\" &\n")
@@ -34,6 +38,7 @@ Group=pi
 Environment=DISPLAY=:0
 Environment=XAUTHORITY=/home/pi/.Xauthority
 ExecStart={SCRIPT_PATH}
+Type=simple
 
 [Install]
 WantedBy=graphical.target
