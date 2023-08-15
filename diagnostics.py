@@ -52,20 +52,75 @@ def master_test():
 
 
 def raspberry_pi_version():
-    try:
-        with open('/proc/cpuinfo', 'r') as f:
-            for line in f:
-                if line.startswith('Revision'):
-                    return line.strip().split(":")[1].strip()
-        return "Unknown"
-    except Exception:
-        return "Error fetching version."
+    # Create a dictionary of known Raspberry Pi revision codes and their descriptions
+    revisions = {
+        "0002": "Raspberry Pi Model B Rev 1",
+        "0003": "Raspberry Pi Model B Rev 1 ECN0001 (no fuses, D14 removed)",
+        "0004": "Raspberry Pi Model B Rev 2",
+        "0005": "Raspberry Pi Model B Rev 2",
+        "0006": "Raspberry Pi Model B Rev 2",
+        "0007": "Raspberry Pi Model A",
+        "0008": "Raspberry Pi Model A",
+        "0009": "Raspberry Pi Model A",
+        "000d": "Raspberry Pi Model B Rev 2",
+        "000e": "Raspberry Pi Model B Rev 2",
+        "000f": "Raspberry Pi Model B Rev 2",
+        "0010": "Raspberry Pi Model B+ Rev 1.2",
+        "0011": "Raspberry Pi Compute Module 1",
+        "0012": "Raspberry Pi Model A+ Rev 1.1",
+        "0013": "Raspberry Pi Model B+ Rev 1.2",
+        "0014": "Raspberry Pi Compute Module 1",
+        "0015": "Raspberry Pi Model A+ Rev 1.1",
+        "a01040": "Raspberry Pi 2 Model B Rev 1.0",
+        "a01041": "Raspberry Pi 2 Model B Rev 1.1",
+        "a21041": "Raspberry Pi 2 Model B Rev 1.1",
+        "a22042": "Raspberry Pi 2 Model B Rev 1.2",
+        "900021": "Raspberry Pi Model A+ Rev 1.1",
+        "900032": "Raspberry Pi Model B+ Rev 1.2",
+        "900092": "Raspberry Pi Zero Rev 1.2",
+        "900093": "Raspberry Pi Zero Rev 1.3",
+        "9000c1": "Raspberry Pi Zero W",
+        "9020e0": "Raspberry Pi 3 Model A+",
+        "a02082": "Raspberry Pi 3 Model B Rev 1.2",
+        "a020a0": "Raspberry Pi Compute Module 3 Rev 1.0",
+        "a020d3": "Raspberry Pi 3 Model B+",
+        "a22082": "Raspberry Pi 3 Model B Rev 1.2",
+        "a220a0": "Raspberry Pi Compute Module 3 Rev 1.0",
+        "a32082": "Raspberry Pi 3 Model B Rev 1.2",
+        "a52082": "Raspberry Pi 3 Model B Rev 1.2",
+        "a22083": "Raspberry Pi 3 Model B Rev 1.3",
+        "a02100": "Raspberry Pi Compute Module 3+ Rev 1.0",
+        "a03111": "Raspberry Pi 4 Model B Rev 1.1 (1GB RAM)",
+        "b03111": "Raspberry Pi 4 Model B Rev 1.1 (2GB RAM)",
+        "c03111": "Raspberry Pi 4 Model B Rev 1.1 (4GB RAM)",
+        "c03112": "Raspberry Pi 4 Model B Rev 1.2 (4GB RAM)"
+        # Add newer models as they're released and documented.
+    }
+
+    with open('/proc/cpuinfo', 'r') as f:
+        for line in f:
+            if line.startswith('Revision'):
+                revision = line.split(":")[1].strip().lower()
+                model = revisions.get(revision, "Unknown Model")
+                return {"code": revision, "description": model}
+    return {"code": "N/A", "description": "Unknown Model"}
+
 
 
 def memory_info():
     try:
-        mem_info = dict((i.split()[0].rstrip(':'), int(i.split()[1])) for i in open('/proc/meminfo').readlines())
-        return mem_info["MemTotal"]
+        mem_info = {}
+
+        with open('/proc/meminfo', 'r') as f:
+            for line in f:
+                if line.startswith('MemTotal'):
+                    mem_total = int(line.split(":")[1].strip().split()[0])  # Extract the total memory in KB
+                    mem_info["total_kb"] = mem_total
+                    mem_info["total_gb"] = round(mem_total / (1024 * 1024),
+                                                 2)  # Convert KB to GB with two decimal places
+
+        description = f"{mem_info['total_gb']} GB RAM"
+        return {"code": mem_info["total_kb"], "description": description}
     except Exception:
         return "Error fetching memory info."
 
