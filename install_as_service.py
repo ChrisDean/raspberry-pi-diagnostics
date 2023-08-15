@@ -10,9 +10,14 @@ MAIN_SCRIPT_PATH = os.path.join(CURRENT_DIR, "diagnostics.py")
 
 def create_service_script():
     with open(SCRIPT_PATH, 'w') as f:
-        f.write("#!/bin/bash\n\n")
+        f.write("#!/bin/bash\n")
         f.write("sleep 10\n")  # Wait for 10 seconds to ensure X server is ready.
-        f.write(f"lxterminal -e \"bash -c 'sudo python {MAIN_SCRIPT_PATH}; bash'\"")
+        # Open lxterminal without waiting for it to close.
+        f.write(f"lxterminal -e \"bash -c 'sudo python {MAIN_SCRIPT_PATH}; bash'\" &\n")
+        # Wait a bit to ensure the terminal has opened.
+        f.write("sleep 2\n")
+        # Use wmctrl to set the lxterminal to fullscreen.
+        f.write("wmctrl -r :ACTIVE: -b add,fullscreen\n")
 
     os.chmod(SCRIPT_PATH, 0o755)
 
