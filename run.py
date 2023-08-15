@@ -1,8 +1,13 @@
 import subprocess
 import json
+import os
 
 
 def run_script(script_name):
+    os.system(f"python3 {script_name}")
+
+
+def capture_script_output(script_name):
     result = subprocess.run(["python3", script_name], capture_output=True, text=True)
     return result.stdout
 
@@ -21,7 +26,7 @@ def display_human_readable(test_results):
 
 if __name__ == "__main__":
     run_script("dependencies_check.py")
-    test_results = run_script("diagnostics.py")
+    test_results = capture_script_output("diagnostics.py")
 
     choice = input(
         "Do you want the output in a human-readable form or as JSON? (Enter 'human' or 'json'): ").strip().lower()
