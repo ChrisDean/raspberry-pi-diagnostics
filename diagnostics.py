@@ -258,13 +258,21 @@ def usb_ports_test():
 
 
 def gpio_pins():
-    # Placeholder: This will only inform about the presence based on Raspberry Pi version.
+    # This will inform about the GPIO pin count based on Raspberry Pi version.
     version = raspberry_pi_version()
-    # Refer to official Raspberry Pi documentation for GPIO pin count per version.
-    pin_info = {
-        "a02082": (3, 40),  # Example: Pi 3 Model B
-    }
-    return pin_info.get(version, ("Unknown model", "Unknown pin count"))
+
+    # Mapping based on GPIO pin count
+    pins_26 = {"Beta", "0002", "0003", "0004", "0005", "0006", "0007", "0008", "0009", "000d", "000e", "000f"}
+    pins_40 = {"a01040", "a01041", "a02082", "a020a0", "a020d3", "a21041", "a22042", "a22082", "a32082", "a52082",
+               "a02083", "b03111", "c03111", "c03112", "c03114", "c03130"}
+
+    if version['code'] in pins_26:
+        return (1, 26)
+    elif version['code'] in pins_40:
+        return (1, 40)
+    else:
+        return ("Unknown model", "Unknown pin count")
+
 def gpio_pins_test():
     GPIO.setmode(GPIO.BOARD)  # Use physical pin numbering
     GPIO.setwarnings(False)   # Turn off warnings
