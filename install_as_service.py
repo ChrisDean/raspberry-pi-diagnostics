@@ -20,7 +20,7 @@ def create_service_script():
         # Open lxterminal without waiting for it to close.
         f.write(f"lxterminal -e \"bash -c 'sudo python {MAIN_SCRIPT_PATH}; bash'\" &\n")
         # Wait a bit to ensure the terminal has opened.
-        f.write("sleep 2\n")
+        f.write("sleep 5\n")
         # Use wmctrl to set the lxterminal to fullscreen.
         f.write("wmctrl -r :ACTIVE: -b add,maximized_vert,maximized_horz\n")
 
@@ -33,6 +33,7 @@ Description=Run diagnostics script in terminal after desktop loads
 After=graphical.target
 
 [Service]
+Type=forking
 User=pi
 Group=pi
 Environment=DISPLAY=:0
