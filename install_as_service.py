@@ -11,8 +11,7 @@ MAIN_SCRIPT_PATH = os.path.join(CURRENT_DIR, "diagnostics.py")
 def create_service_script():
     with open(SCRIPT_PATH, 'w') as f:
         f.write("#!/bin/bash\n\n")
-        f.write(f"xterm -e \"{MAIN_SCRIPT_PATH}\"")
-    f.write(f"lxterminal -e \"bash -c '{MAIN_SCRIPT_PATH}; bash'\"")
+        f.write(f"lxterminal -e \"bash -c '{MAIN_SCRIPT_PATH}; bash'\"")
     os.chmod(SCRIPT_PATH, 0o755)
 
 
