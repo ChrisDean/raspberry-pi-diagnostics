@@ -274,7 +274,7 @@ def gpio_pins():
         return ("Unknown model", "Unknown pin count")
 
 
-def get_gpio_testable_pins(version):
+def get_gpio_testable_pins(version_code):
     """
     Returns a list of GPIO pins (in BOARD numbering) that are safe to test for the given Raspberry Pi version.
     """
@@ -293,9 +293,9 @@ def get_gpio_testable_pins(version):
     # Raspberry Pi versions with 40-pin GPIO (Adding some example codes, you might want to expand on this list)
     pi_40_pin_versions = {"a01040", "a01041", "a02082", "a22082", "a32082", "a020d3"}
 
-    if version in pi_26_pin_versions:
+    if version_code in pi_26_pin_versions:
         return layout_26_pin
-    elif version in pi_40_pin_versions:
+    elif version_code in pi_40_pin_versions:
         return layout_40_pin
     else:
         return []
@@ -305,7 +305,7 @@ def get_gpio_testable_pins(version):
 
 def gpio_pins_test():
     version = raspberry_pi_version()
-    testable_pins = get_gpio_testable_pins(version)
+    testable_pins = get_gpio_testable_pins(version['code'])
 
     if not testable_pins:
         return f"Model {version} not recognized. Cannot perform GPIO test."
