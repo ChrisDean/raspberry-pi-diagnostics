@@ -106,23 +106,16 @@ def raspberry_pi_version():
     return {"code": "N/A", "description": "Unknown Model"}
 
 
-
 def memory_info():
-    try:
-        mem_info = {}
+    """Return memory usage information."""
+    memory = psutil.virtual_memory()
 
-        with open('/proc/meminfo', 'r') as f:
-            for line in f:
-                if line.startswith('MemTotal'):
-                    mem_total = int(line.split(":")[1].strip().split()[0])  # Extract the total memory in KB
-                    mem_info["total_kb"] = mem_total
-                    mem_info["total_gb"] = round(mem_total / (1024 * 1024),
-                                                 2)  # Convert KB to GB with two decimal places
+    total_mem = memory.total / (1024 ** 2)  # Convert bytes to MB
+    available_mem = memory.available / (1024 ** 2)
+    used_mem = memory.used / (1024 ** 2)
+    memory_percentage = memory.percent
 
-        description = f"{mem_info['total_gb']} GB RAM"
-        return {"code": mem_info["total_kb"], "description": description}
-    except Exception:
-        return "Error fetching memory info."
+    return f"Total Memory: {total_mem:.2f} MB, Used: {used_mem:.2f} MB, Available: {available_mem:.2f} MB, Usage: {memory_percentage}%"
 
 
 def cpu_info():
@@ -301,104 +294,107 @@ def gpio_pins_test():
 import subprocess
 import os
 
+
 def camera_port_test():
     try:
-        # Check if the camera is enabled and connected
-        vcgencmd_output = subprocess.getoutput('/opt/vc/bin/vcgencmd get_camera')
-        if 'supported=1' not in vcgencmd_output:
-            return "Camera module not supported. Ensure camera interface is enabled via raspi-config."
-
-        if 'detected=0' in vcgencmd_output:
-            return "No camera detected on the camera port."
-
         # Try capturing a test image
         test_image_path = "/tmp/test_image.jpg"
-        subprocess.run(['raspistill', '-o', test_image_path, '-t', '1'], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        capture_process = subprocess.run(['raspistill', '-o', test_image_path, '-t', '1'], stdout=subprocess.PIPE,
+                                         stderr=subprocess.PIPE, timeout=10)
 
-        # If the capture succeeds, the camera is working. You can add additional checks on the image size, etc.
-        if os.path.exists(test_image_path):
+        # If the capture succeeds, the camera is working.
+        if capture_process.returncode == 0 and os.path.exists(test_image_path):
             image_size = os.path.getsize(test_image_path)
             os.remove(test_image_path)  # Clean up the test image
             return f"Camera is functioning correctly. Test image size: {image_size} bytes."
-        else:
-            return "Camera capture failed. Unknown error."
 
-    except subprocess.CalledProcessError as e:
-        return f"Camera test failed with error: {e.output.decode('utf-8')}"
+        # If capturing fails, check the error to determine the reason.
+        elif "not detected" in capture_process.stderr.decode("utf-8"):
+            return "No camera detected on the camera port."
+
+        else:
+            return f"Camera capture failed with error: {capture_process.stderr.decode('utf-8')}"
+
+    except subprocess.TimeoutExpired:
+        return "Camera capture timed out. Check if the camera module is functioning correctly."
 
     except Exception as e:
         return f"Error during camera test: {e}"
 
 
-
-
 def display_port_test():
     try:
-        # Check if DSI port is active
-        dsi_status = subprocess.getoutput('/opt/vc/bin/vcgencmd display_power 4')  # 4 corresponds to the DSI port
+        # Check if DSI display is connected using DRM
+        if not is_dsi_display_connected():
+            return "No display detected on the DSI port. If you're using a non-official screen, manual inspection is recommended."
 
-        if "display_power=0" in dsi_status:
-            return "Display port (DSI) is not active. Ensure it's correctly set up and connected."
-
-        # This is a rudimentary way to check if the official Raspberry Pi touch display might be connected.
-        # The method can yield false positives.
-        touchscreen_detected = os.path.exists("/dev/input/touchscreen")
-
-        if not touchscreen_detected:
-            return "No touchscreen detected on the DSI port. If you're using a non-official screen, manual inspection is recommended."
-
-        # Display a test pattern using pygame
+        # Display a test pattern using pygame with feedback
+        import pygame
         pygame.init()
-        screen = pygame.display.set_mode((800, 480))  # Adjust resolution to your screen's resolution if different
-        screen.fill((255, 0, 0))  # Fill screen with red color
+        screen = pygame.display.set_mode((800, 480))
+        screen.fill((255, 0, 0))
+        font = pygame.font.Font(None, 36)
+        text_surface = font.render("If you see this, press any key.", True, (255, 255, 255))
+        screen.blit(text_surface, (100, 240))
         pygame.display.flip()
-        pygame.time.wait(5000)  # Display for 5 seconds
-        pygame.quit()
 
-        return "Display port (DSI) is active and a display appears to be connected. A red test pattern was displayed."
+        waiting_for_input = True
+        while waiting_for_input:
+            for event in pygame.event.get():
+                if event.type == pygame.KEYDOWN:
+                    waiting_for_input = False
+
+        pygame.quit()
+        return "A display appears to be connected to the DSI port."
 
     except Exception as e:
         return f"Error during display port test: {e}"
 
+
+def is_dsi_display_connected():
+    return os.path.exists('/sys/class/drm/card0-DSI-1/status') and \
+        open('/sys/class/drm/card0-DSI-1/status').read().strip() == 'connected'
+
+
 def hdmi_port_test():
     try:
-        # Check HDMI status
-        hdmi_status = subprocess.getoutput('/opt/vc/bin/vcgencmd display_power 2')  # 2 corresponds to the HDMI port
-
-        if "display_power=0" in hdmi_status:
+        # Check if HDMI display is connected using DRM
+        if not is_hdmi_display_connected():
             return "HDMI port is not active or no monitor is detected."
 
-        # Get HDMI configuration details
-        hdmi_mode = subprocess.getoutput('/opt/vc/bin/vcgencmd get_config int | grep "hdmi_mode"')
-        hdmi_group = subprocess.getoutput('/opt/vc/bin/vcgencmd get_config int | grep "hdmi_group"')
-        hdmi_drive = subprocess.getoutput('/opt/vc/bin/vcgencmd get_config int | grep "hdmi_drive"')
-        hdmi_timings = subprocess.getoutput('/opt/vc/bin/vcgencmd get_config int | grep "hdmi_timings"')
-
-        # Display a test pattern using pygame on HDMI
+        # Display a test pattern using pygame with feedback on HDMI
+        import pygame
         pygame.init()
         info = pygame.display.Info()  # Get current screen resolution
-        screen = pygame.display.set_mode((info.current_w, info.current_h), pygame.FULLSCREEN)  # Use current resolution in fullscreen
+        screen = pygame.display.set_mode((info.current_w, info.current_h),
+                                         pygame.FULLSCREEN)  # Use current resolution in fullscreen
         screen.fill((0, 255, 0))  # Fill screen with green color
+        font = pygame.font.Font(None, 36)
+        text_surface = font.render("If you see this on HDMI, press any key.", True, (255, 255, 255))
+        screen.blit(text_surface, (info.current_w // 4, info.current_h // 2))
         pygame.display.flip()
-        pygame.time.wait(5000)  # Display for 5 seconds
+
+        waiting_for_input = True
+        while waiting_for_input:
+            for event in pygame.event.get():
+                if event.type == pygame.KEYDOWN:
+                    waiting_for_input = False
+
         pygame.quit()
 
-        # Compile results
-        results = [
-            f"HDMI port seems active. A green test pattern was displayed on a screen with resolution {info.current_w}x{info.current_h}.",
-            f"Current HDMI Mode: {hdmi_mode}",
-            f"Current HDMI Group: {hdmi_group}",
-            f"Current HDMI Drive: {hdmi_drive}"
-        ]
-
-        # Add HDMI timings if available
-        if "hdmi_timings" in hdmi_timings:
-            results.append(hdmi_timings)
-
-        return "\n".join(results)
+        return f"A display appears to be connected to the HDMI port. A green test pattern was displayed on a screen with resolution {info.current_w}x{info.current_h}."
 
     except Exception as e:
         return f"Error during HDMI port test: {e}"
+
+
+def is_hdmi_display_connected():
+    # Usually, Raspberry Pi's HDMI outputs are labeled HDMI-A-1 and HDMI-A-2
+    for hdmi_output in ['HDMI-A-1', 'HDMI-A-2']:
+        if os.path.exists(f'/sys/class/drm/card0-{hdmi_output}/status') and \
+                open(f'/sys/class/drm/card0-{hdmi_output}/status').read().strip() == 'connected':
+            return True
+    return False
 
 
 def audio_jack_test():
@@ -427,30 +423,64 @@ def audio_jack_test():
         return f"Error during audio jack test: {e}"
 
 def get_cpu_temperature():
-    temp = subprocess.getoutput("/opt/vc/bin/vcgencmd measure_temp").replace("temp=", "")
-    return f"CPU Temperature: {temp}"
+    """Return CPU temperature."""
+    with open("/sys/class/thermal/thermal_zone0/temp", "r") as temp_file:
+        # Read the temperature and convert it from millidegrees to degrees Celsius.
+        temp_c = int(temp_file.read()) / 1000.0
+    return f"CPU Temperature: {temp_c}°C"
+
+
+def get_cpu_voltage():
+    try:
+        with open("/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_cur_voltage", "r") as f:
+            cpu_voltage = f.readline().strip()
+            return f"CPU Voltage: {cpu_voltage} V"
+    except FileNotFoundError:
+        return "Cannot retrieve CPU voltage. File not found."
+    except Exception as e:
+        return f"Error retrieving CPU voltage: {e}"
 
 def get_voltages():
-    core_voltage = subprocess.getoutput("/opt/vc/bin/vcgencmd measure_volts core").replace("volt=", "")
-    sdram_c_voltage = subprocess.getoutput("/opt/vc/bin/vcgencmd measure_volts sdram_c").replace("volt=", "")
-    sdram_i_voltage = subprocess.getoutput("/opt/vc/bin/vcgencmd measure_volts sdram_i").replace("volt=", "")
-    sdram_p_voltage = subprocess.getoutput("/opt/vc/bin/vcgencmd measure_volts sdram_p").replace("volt=", "")
-    return f"Core Voltage: {core_voltage}\nSDRAM_C Voltage: {sdram_c_voltage}\nSDRAM_I Voltage: {sdram_i_voltage}\nSDRAM_P Voltage: {sdram_p_voltage}"
+    cpu_voltage = get_cpu_voltage()
+    # We can't get exact values for other voltages without vcgencmd
+    # Placeholders:
+    sdram_c_voltage = "Unavailable"
+    sdram_i_voltage = "Unavailable"
+    sdram_p_voltage = "Unavailable"
+    return f"Core Voltage (CPU): {cpu_voltage}\nSDRAM_C Voltage: {sdram_c_voltage}\nSDRAM_I Voltage: {sdram_i_voltage}\nSDRAM_P Voltage: {sdram_p_voltage}"
 
 def get_cpu_utilization():
     utilization = psutil.cpu_percent()
     return f"CPU Utilization: {utilization}%"
 
 def get_gpu_memory():
-    memory = subprocess.getoutput("/opt/vc/bin/vcgencmd get_mem gpu").replace("gpu=", "")
-    return f"GPU Memory: {memory}"
+    try:
+        with open("/boot/config.txt", "r") as file:
+            for line in file.readlines():
+                if line.startswith("gpu_mem="):
+                    memory = line.split("=")[1].strip()
+                    return f"GPU Memory: {memory}M"
+        return "GPU Memory info not found in /boot/config.txt."
+    except FileNotFoundError:
+        return "Cannot retrieve GPU memory. /boot/config.txt not found."
+    except Exception as e:
+        return f"Error retrieving GPU memory: {e}"
 
 
 def get_clock_frequencies():
-    core_freq = int(subprocess.getoutput("/opt/vc/bin/vcgencmd measure_clock core").split('=')[1]) / 1_000_000  # Convert Hz to MHz
-    gpu_freq = int(subprocess.getoutput("/opt/vc/bin/vcgencmd measure_clock gpu").split('=')[1]) / 1_000_000
-    arm_freq = int(subprocess.getoutput("/opt/vc/bin/vcgencmd measure_clock arm").split('=')[1]) / 1_000_000
-    return f"Core Clock Frequency: {core_freq} MHz\nGPU Clock Frequency: {gpu_freq} MHz\nARM Clock Frequency: {arm_freq} MHz"
+    try:
+        with open("/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq", "r") as f:
+            arm_freq_khz = int(f.readline().strip())  # Read the frequency in KHz
+            arm_freq_mhz = arm_freq_khz / 1000  # Convert to MHz
+
+        # Since the GPU and Core frequencies aren't exposed through sysfs by default,
+        # we'll indicate that in the output.
+        return f"ARM Clock Frequency: {arm_freq_mhz} MHz\nGPU Clock Frequency: Not Available\nCore Clock Frequency: Not Available"
+
+    except FileNotFoundError:
+        return "Error: CPU frequency path not found."
+    except Exception as e:
+        return f"Error retrieving clock frequencies: {e}"
 
 
 def get_disk_io():
@@ -458,12 +488,30 @@ def get_disk_io():
     return f"Disk Read Count: {io_counters.read_count}\nDisk Write Count: {io_counters.write_count}\nBytes Read: {io_counters.read_bytes}\nBytes Written: {io_counters.write_bytes}"
 
 def get_hardware_codecs():
-    codecs = ['MPG2', 'WVC1', 'VP8', 'VP9', 'H264', 'MJPG']
-    result = []
-    for codec in codecs:
-        status = subprocess.getoutput(f"/opt/vc/bin/vcgencmd codec_enabled {codec}")
-        result.append(status)
-    return '\n'.join(result)
+    # Map of codec names to their potential corresponding kernel modules.
+    # Note: This mapping might not be perfect and may need adjustments based on Raspberry Pi model and OS version.
+    codecs_map = {
+        'MPG2': 'mpeg2_v4l2_m2m',
+        'WVC1': None,  # As of my last update, there's no direct kernel module for WVC1
+        'VP8': 'vp8_v4l2_m2m',
+        'VP9': 'vp9_v4l2_m2m',
+        'H264': 'h264_v4l2_m2m',
+        'MJPG': 'mjpeg_v4l2_m2m'
+    }
+
+    results = []
+    for codec, module in codecs_map.items():
+        if module:
+            # Check if the module is loaded
+            module_status = subprocess.getoutput(f"lsmod | grep {module}")
+            if module_status:
+                results.append(f"{codec} codec is enabled.")
+            else:
+                results.append(f"{codec} codec is not enabled.")
+        else:
+            results.append(f"{codec} codec status cannot be determined.")
+
+    return '\n'.join(results)
 
 def get_irq_statistics():
     with open("/proc/interrupts", "r") as f:
