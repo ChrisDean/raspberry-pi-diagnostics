@@ -11,7 +11,9 @@ MAIN_SCRIPT_PATH = os.path.join(CURRENT_DIR, "diagnostics.py")
 def create_service_script():
     with open(SCRIPT_PATH, 'w') as f:
         f.write("#!/bin/bash\n\n")
+        f.write("sleep 10\n")  # Wait for 10 seconds to ensure X server is ready.
         f.write(f"lxterminal -e \"bash -c '{MAIN_SCRIPT_PATH}; bash'\"")
+
     os.chmod(SCRIPT_PATH, 0o755)
 
 
@@ -22,7 +24,9 @@ After=graphical.target
 
 [Service]
 User=pi
+Group=pi
 Environment=DISPLAY=:0
+Environment=XAUTHORITY=/home/pi/.Xauthority
 ExecStart={SCRIPT_PATH}
 
 [Install]
