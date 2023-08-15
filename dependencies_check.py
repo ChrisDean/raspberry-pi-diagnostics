@@ -16,7 +16,7 @@ def check_and_install_dependencies():
         "netstat": {"installer": install_via_apt, "type": "tool", "package": "net-tools"},
         "psutil": {"installer": install_via_pip, "type": "python-lib", "package": "psutil"},
         "lxterminal": {"installer": install_via_apt, "type": "tool"},
-        "xterm": {"installer": install_via_apt, "type": "tool"}
+        "xterm": {"installer": install_via_apt, "type": "tool"},
         "wmctrl": {"installer": install_via_apt, "type": "tool"}
     }
 
