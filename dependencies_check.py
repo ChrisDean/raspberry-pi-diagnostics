@@ -22,10 +22,12 @@ def check_and_install_dependencies():
         if details["type"] == "tool":
             if not is_tool_installed(name):
                 print(f"{name} is not installed.")
-                choice = input(f"Do you want to install {name} via apt? (yes/no): ")
-                if choice.lower() == 'yes':
+                choice = input(f"Do you want to install {name} via apt? (yes/no): ").lower()
+                if choice in ['yes', 'y']:
                     package = details.get("package", name)
                     details["installer"](package)
+                elif choice not in ['no', 'n']:
+                    print(f"Invalid choice for {name}. Skipping...")
 
         elif details["type"] == "pip_package":
             try:
@@ -33,9 +35,11 @@ def check_and_install_dependencies():
                 subprocess.run(['pip', 'show', name], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             except subprocess.CalledProcessError:
                 print(f"{name} is not installed.")
-                choice = input(f"Do you want to install {name} via pip? (yes/no): ")
-                if choice.lower() == 'yes':
+                choice = input(f"Do you want to install {name} via pip? (yes/no): ").lower()
+                if choice in ['yes', 'y']:
                     details["installer"](name)
+                elif choice not in ['no', 'n']:
+                    print(f"Invalid choice for {name}. Skipping...")
 
 def is_tool_installed(tool):
     try:
