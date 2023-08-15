@@ -11,7 +11,8 @@ def check_and_install_dependencies():
         "pygame": {"installer": install_via_pip, "type": "pip_package"},
         "amixer": {"installer": install_via_apt, "type": "tool", "package": "alsa-utils"},
         "aplay": {"installer": install_via_apt, "type": "tool", "package": "alsa-utils"},
-        "vcgencmd": {"installer": install_via_apt, "type": "tool", "package": "libraspberrypi-bin"},
+# doesn't seem to exist on the lastest raspbian so remove the dependency
+#        "vcgencmd": {"installer": install_via_apt, "type": "tool", "package": "libraspberrypi-bin"},
         "netstat": {"installer": install_via_apt, "type": "tool", "package": "net-tools"},
         "psutil": {"installer": install_via_pip, "type": "python-lib", "package": "psutil"},
 
