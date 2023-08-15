@@ -273,22 +273,54 @@ def gpio_pins():
     else:
         return ("Unknown model", "Unknown pin count")
 
-def gpio_pins_test():
-    GPIO.setmode(GPIO.BOARD)  # Use physical pin numbering
-    GPIO.setwarnings(False)   # Turn off warnings
 
-    # Typically, Raspberry Pi models have GPIO pins ranging from GPIO2 to GPIO27.
-    # Adjust the range if your model is different.
-    pins_range = list(range(2, 28))
+def get_gpio_testable_pins(version):
+    """
+    Returns a list of GPIO pins (in BOARD numbering) that are safe to test for the given Raspberry Pi version.
+    """
+    # These are physical pin numbers in BOARD mode.
+
+    # 26-pin layout, for Raspberry Pi 1 Model A and B.
+    # Ignoring pins like I2C, UART, and obviously the power and ground pins.
+    layout_26_pin = [3, 5, 7, 8, 10, 11, 12, 13, 15, 16, 18, 19, 21, 22, 23, 24, 26]
+
+    # 40-pin layout, for newer models.
+    layout_40_pin = [3, 5, 7, 8, 10, 11, 12, 13, 15, 16, 18, 19, 21, 22, 23, 24, 26, 27, 28, 29, 31, 32, 33, 35, 36, 37, 38, 40]
+
+    # Raspberry Pi versions with 26-pin GPIO
+    pi_26_pin_versions = {"a21041", "a22042"}
+
+    # Raspberry Pi versions with 40-pin GPIO (Adding some example codes, you might want to expand on this list)
+    pi_40_pin_versions = {"a01040", "a01041", "a02082", "a22082", "a32082", "a020d3"}
+
+    if version in pi_26_pin_versions:
+        return layout_26_pin
+    elif version in pi_40_pin_versions:
+        return layout_40_pin
+    else:
+        return []
+
+
+
+
+def gpio_pins_test():
+    version = raspberry_pi_version()
+    testable_pins = get_gpio_testable_pins(version)
+
+    if not testable_pins:
+        return f"Model {version} not recognized. Cannot perform GPIO test."
+
+    GPIO.setmode(GPIO.BOARD)
+    GPIO.setwarnings(False)
 
     failed_pins = []
 
-    for pin in pins_range:
+    for pin in testable_pins:
         try:
             GPIO.setup(pin, GPIO.OUT)
             GPIO.output(pin, GPIO.HIGH)
             GPIO.setup(pin, GPIO.IN)
-            if not GPIO.input(pin):  # If we can't read HIGH after setting to HIGH, it's a failure.
+            if not GPIO.input(pin):
                 failed_pins.append(pin)
         except Exception as e:
             failed_pins.append(pin)
@@ -299,9 +331,6 @@ def gpio_pins_test():
         return "All GPIO pins are functioning correctly."
     else:
         return f"GPIO pins with potential issues: {', '.join(map(str, failed_pins))}"
-
-import subprocess
-import os
 
 
 def camera_port_test():
