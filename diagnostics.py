@@ -13,7 +13,8 @@ def master_test():
         ("Raspberry Pi Version", raspberry_pi_version),
         ("Memory Info", memory_info),
         ("CPU Info", cpu_info),
-        ("SD Card Performance", sd_card_performance),
+# commented out as I don't need to run this every time, can be re-enable by anyone wanting to use it though
+#        ("SD Card Performance", sd_card_performance),
         ("Ethernet Port Status", ethernet_port_status),
         ("Ethernet Speed", ethernet_speed),
         ("Wifi Adapter Status", wifi_adapter_status),
