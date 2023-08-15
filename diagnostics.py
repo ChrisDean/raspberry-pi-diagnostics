@@ -3,6 +3,8 @@ import subprocess
 import json
 import RPi.GPIO as GPIO
 import pygame
+import datetime
+import psutil
 
 def master_test():
     results = {}  # Central JSON object to collect the outputs of each test
@@ -40,8 +42,13 @@ def master_test():
     ]
 
     for test_name, test_func in tests:
-        results[test_name] = test_func()
-        return results
+        print(f"Running {test_name} test...")
+        result = test_func()
+        results[test_name] = result
+        print(f"Outcome for {test_name}: {result}")
+        print("=" * 40)
+
+    return results
 
 
 def raspberry_pi_version():

@@ -13,6 +13,9 @@ def capture_script_output(script_name):
 
 
 def display_human_readable(test_results):
+    if not test_results:
+        print("No results to display. Exiting.")
+        return
     parsed_results = json.loads(test_results)
     for key, value in parsed_results.items():
         print(f"{key}:\n{'-' * len(key)}")
@@ -25,14 +28,18 @@ def display_human_readable(test_results):
 
 
 if __name__ == "__main__":
-    run_script("dependencies_check.py")
+    run_script("dependencies_check.py")  # This will allow user interaction
     test_results = capture_script_output("diagnostics.py")
 
-    choice = input(
-        "Do you want the output in a human-readable form or as JSON? (Enter 'human' or 'json'): ").strip().lower()
-    if choice == 'human':
+    if not test_results:
+        print("No test results obtained. Exiting.")
+        exit()
+
+    choice = input("Do you want the output in a human-readable form (h/human) or as JSON (j/json)? ").strip().lower()
+    if choice in ['human', 'h']:
         display_human_readable(test_results)
-    elif choice == 'json':
+    elif choice in ['json', 'j']:
         print(test_results)
     else:
         print("Invalid choice. Exiting.")
+        exit()
