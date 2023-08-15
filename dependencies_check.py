@@ -2,7 +2,7 @@ import subprocess
 
 def check_and_install_dependencies():
     dependencies = {
-        "bluez": {"installer": install_via_apt, "type": "tool"},
+         "hciconfig": {"installer": install_via_apt, "type": "tool", "package": "bluez"},
         "iwconfig": {"installer": install_via_apt, "type": "tool", "package": "wireless-tools"},
         "hcitool": {"installer": install_via_apt, "type": "tool"},
         "speedtest": {"installer": install_via_apt, "type": "tool", "package": "speedtest-cli"},
@@ -13,7 +13,7 @@ def check_and_install_dependencies():
         "aplay": {"installer": install_via_apt, "type": "tool", "package": "alsa-utils"},
         "vcgencmd": {"installer": install_via_apt, "type": "tool", "package": "libraspberrypi-bin"},
         "netstat": {"installer": install_via_apt, "type": "tool", "package": "net-tools"},
-        "hciconfig": {"installer": install_via_apt, "type": "tool", "package": "bluez"},
+
         "psutil": {"installer": install_via_pip, "type": "python-lib", "package": "psutil"},
 
     }
@@ -39,11 +39,9 @@ def check_and_install_dependencies():
 
 def is_tool_installed(tool):
     try:
-        subprocess.run([tool], stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
+        subprocess.run(["which", tool], stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
         return True
     except subprocess.CalledProcessError:
-        return True  # Tool is installed but returned a non-zero exit code
-    except FileNotFoundError:
         return False  # Tool is not installed
 
 def prompt_installation(tool):
