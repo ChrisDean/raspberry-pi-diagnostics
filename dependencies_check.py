@@ -15,6 +15,8 @@ def check_and_install_dependencies():
 #        "vcgencmd": {"installer": install_via_apt, "type": "tool", "package": "libraspberrypi-bin"},
         "netstat": {"installer": install_via_apt, "type": "tool", "package": "net-tools"},
         "psutil": {"installer": install_via_pip, "type": "python-lib", "package": "psutil"},
+        "lxterminal": {"installer": install_via_apt, "type": "tool"},
+        "xterm": {"installer": install_via_apt, "type": "tool"}
 
     }
 

@@ -13,18 +13,18 @@ clone this repo and:
 
 #1 Run the following to install necessary tools and libraries
 ```
-python ./dependencies_check.py
+sudo python ./dependencies_check.py
 ```
 
 #2 Run the following to perform the diagnostics
 ```
-python ./diagnostics.py
+sudo python ./diagnostics.py
 ```
 
 #3 Optional: Run the following to install the diagnotics script as a service
 so it runs on boot (good for plugin, test board, and go)
 ```
-python ./install_as_service.py
+sudo python ./install_as_service.py
 ```
 
 ## Limitations
