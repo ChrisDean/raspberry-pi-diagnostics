@@ -1,6 +1,6 @@
 # raspberry-pi-diagnostics
 This a script to run hardware diagnostics against most models of raspberry pi (I've not checked all features across 
-the board but happy to take feedback.
+the board but happy to take feedback).
 
 It was written due to a need to batch test a set of about 200 raspberry pis with no quick and easy non-commercial 
 option to do so.
