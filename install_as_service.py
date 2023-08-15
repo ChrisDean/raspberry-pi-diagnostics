@@ -22,7 +22,7 @@ def create_service_script():
         # Wait a bit to ensure the terminal has opened.
         f.write("sleep 2\n")
         # Use wmctrl to set the lxterminal to fullscreen.
-        f.write("wmctrl -r :ACTIVE: -b add,fullscreen\n")
+        f.write("wmctrl -r :ACTIVE: -b add,maximized_vert,maximized_horz\n")
 
     os.chmod(SCRIPT_PATH, 0o755)
 
