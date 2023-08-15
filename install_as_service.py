@@ -11,6 +11,7 @@ MAIN_SCRIPT_PATH = os.path.join(CURRENT_DIR, "diagnostics.py")
 def create_service_script():
     with open(SCRIPT_PATH, 'w') as f:
         f.write("#!/bin/bash\n")
+        f.write("export NO_AT_BRIDGE=1\n") # prevent issues with accessing the accessibility bus
         f.write("sleep 10\n")  # Wait for 10 seconds to ensure X server is ready.
         # Open lxterminal without waiting for it to close.
         f.write(f"lxterminal -e \"bash -c 'sudo python {MAIN_SCRIPT_PATH}; bash'\" &\n")
