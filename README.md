@@ -11,5 +11,5 @@ a PR for your fix.
 Usage:
 clone this repo and run
 ```
-python ./diagnostics.py
+python ./run.py
 ```
