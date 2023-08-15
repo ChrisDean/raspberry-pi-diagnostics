@@ -12,7 +12,7 @@ def create_service_script():
     with open(SCRIPT_PATH, 'w') as f:
         f.write("#!/bin/bash\n\n")
         f.write("sleep 10\n")  # Wait for 10 seconds to ensure X server is ready.
-        f.write(f"lxterminal -e \"bash -c '{MAIN_SCRIPT_PATH}; bash'\"")
+        f.write(f"lxterminal -e \"bash -c 'sudo python {MAIN_SCRIPT_PATH}; bash'\"")
 
     os.chmod(SCRIPT_PATH, 0o755)
 
